@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Mausam 2.0</string>
+    <string name="imd_title">India Meteorological Department</string>
+    <string name="moes_title">Ministry of Earth Sciences</string>
+</resources>
