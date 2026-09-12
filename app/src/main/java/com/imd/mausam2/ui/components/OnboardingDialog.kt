@@ -23,10 +23,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.imd.mausam2.data.model.PersonaType
 import com.imd.mausam2.ui.theme.*
 
@@ -47,6 +46,12 @@ fun OnboardingDialog(
     onComplete: (Set<PersonaType>) -> Unit
 ) {
     var selectedPersonas by remember { mutableStateOf(initialSelected.toMutableSet()) }
+
+    BackHandler {
+        if (selectedPersonas.isNotEmpty()) {
+            onComplete(selectedPersonas)
+        }
+    }
 
     val personaCards = remember {
         listOf(
@@ -125,22 +130,21 @@ fun OnboardingDialog(
         )
     }
 
-    Dialog(
-        onDismissRequest = { /* Force user to select at least one */ },
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFF0F172A), Color(0xFF020617)))),
+        color = Color.Transparent
     ) {
-        Surface(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0xFF0F172A), Color(0xFF020617)))),
-            color = Color.Transparent
+                .statusBarsPadding()
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .navigationBarsPadding()
-                    .padding(20.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
             ) {
                 // Header
                 Row(
@@ -177,7 +181,7 @@ fun OnboardingDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = if (isHindi) "चयनित कार्ड आपके होमपेज पर शीर्ष प्राथमिकताओं के रूप में प्रदर्शित होंगे।"
                            else "Tap any cards you want. Your homepage feed will dynamically re-prioritize for you.",
@@ -185,16 +189,18 @@ fun OnboardingDialog(
                     fontSize = 12.sp,
                     lineHeight = 16.sp
                 )
+            }
 
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // 2-Column Grid of Scrollable Persona Cards
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+            // 2-Column Grid of Scrollable Persona Cards
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 12.dp)
+            ) {
                     items(personaCards) { card ->
                         val isSelected = selectedPersonas.contains(card.type)
                         val scale by animateFloatAsState(if (isSelected) 1.02f else 1.0f, label = "cardScale")
@@ -287,24 +293,36 @@ fun OnboardingDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Bottom Action
-                Button(
-                    onClick = { onComplete(selectedPersonas) },
+            // Pinned Bottom Action Bar with Navigation Insets
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0xEE0F172A),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+                shadowElevation = 16.dp
+            ) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SkyCyan)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
-                    Text(
-                        text = if (isHindi) "मेरा मौसम शुरू करें (${selectedPersonas.size} कार्ड चयनित) →"
-                               else "Launch My Personalized Mausam (${selectedPersonas.size} Cards) →",
-                        color = Color.Black,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Button(
+                        onClick = { onComplete(selectedPersonas) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SkyCyan),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                    ) {
+                        Text(
+                            text = if (isHindi) "मेरा मौसम शुरू करें (${selectedPersonas.size} कार्ड चयनित) →"
+                                   else "Launch My Personalized Mausam (${selectedPersonas.size} Cards) →",
+                            color = Color.Black,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

@@ -1,7 +1,11 @@
 package com.imd.mausam2.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,21 +20,30 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.imd.mausam2.data.model.CompleteWeatherData
 import com.imd.mausam2.data.model.PersonaType
+import com.imd.mausam2.ui.MausamViewModel
 import com.imd.mausam2.ui.components.GlassCard
+import com.imd.mausam2.ui.components.MausamChatbotFab
+import com.imd.mausam2.ui.components.MausamChatbotModal
+import com.imd.mausam2.ui.components.ThunderstormCloudSymbol
 import com.imd.mausam2.ui.theme.*
 
 @Composable
 fun PersonasScreen(
+    data: CompleteWeatherData,
     activePersonas: Set<PersonaType>,
     isHindi: Boolean,
+    viewModel: MausamViewModel,
     onOpenOnboarding: () -> Unit
 ) {
     var selectedTravelCity by remember { mutableStateOf("London") }
+    var showChatbot by remember { mutableStateOf(false) }
 
     val travelPackingMap = remember {
         mapOf(
@@ -42,35 +55,105 @@ fun PersonasScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        // Header
-        Text(
-            text = if (isHindi) "उपभोक्ता प्रोफाइल एवं स्मार्ट टूल्स" else "Consumer Personas & Tools",
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = if (isHindi) "अपनी दैनिक आवश्यकताओं के अनुसार प्रोफाइल अनुकूलित करें" else "Tailor your weather dashboard to your exact daily routine",
-            color = SkyCyan,
-            fontSize = 12.sp
-        )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(bottom = 80.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // 1. Current Active Personas & Re-customize Button
-            item {
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
+            // Header
+            Text(
+                text = if (isHindi) "उपभोक्ता प्रोफाइल एवं स्मार्ट टूल्स" else "Consumer Personas & Tools",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = if (isHindi) "अपनी दैनिक आवश्यकताओं के अनुसार प्रोफाइल अनुकूलित करें" else "Tailor your weather dashboard to your exact daily routine",
+                color = SkyCyan,
+                fontSize = 12.sp
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(bottom = 90.dp)
+            ) {
+                // 0. FEATURED: MAUSAM 7-DAY AI CHATBOT HERO CARD
+                item {
+                    GlassCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable { showChatbot = true },
+                        backgroundAlpha = 0.35f,
+                        cornerRadius = 20.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(Brush.radialGradient(listOf(Color(0xFF1E293B), Color(0xFF0F172A))))
+                                    .border(1.5.dp, Brush.linearGradient(listOf(SkyCyan, NeonOrange)), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ThunderstormCloudSymbol(sizeDp = 28)
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = if (isHindi) "मौसम 7-दिवसीय AI चैटबॉट" else "Mausam 7-Day AI Chatbot",
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = SkyCyan.copy(alpha = 0.2f)
+                                    ) {
+                                        Text(
+                                            text = "AI BOT",
+                                            color = SkyCyan,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (isHindi) "आगामी 7 दिनों के मौसम (बारिश, तापमान, तूफान) पर लाइव बातचीत करें"
+                                           else "Ask questions about the upcoming 7 days (rain, heat, weekend)",
+                                    color = TextSecondary,
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp
+                                )
+                            }
+
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = "Open Chatbot",
+                                tint = SkyCyan,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+
+                // 1. Current Active Personas & Re-customize Button
+                item {
+                    GlassCard(modifier = Modifier.fillMaxWidth()) {
                     Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -234,6 +317,29 @@ fun PersonasScreen(
                     }
                 }
             }
+        }
+    }
+
+    // Floating Circular AI Chatbot Button (clouds with thunderstorm symbol)
+        MausamChatbotFab(
+            onClick = { showChatbot = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 20.dp, end = 20.dp)
+        )
+
+        // Fullscreen / Modal 7-Day AI Chatbot Interface
+        AnimatedVisibility(
+            visible = showChatbot,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            MausamChatbotModal(
+                data = data,
+                isHindi = isHindi,
+                viewModel = viewModel,
+                onDismiss = { showChatbot = false }
+            )
         }
     }
 }

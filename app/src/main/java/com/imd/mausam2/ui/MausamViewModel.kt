@@ -1,14 +1,13 @@
 package com.imd.mausam2.ui
 
 import android.app.Application
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.imd.mausam2.data.model.CompleteWeatherData
 import com.imd.mausam2.data.model.LocationInfo
 import com.imd.mausam2.data.model.PersonaType
 import com.imd.mausam2.data.repository.WeatherRepository
+import com.imd.mausam2.domain.MausamNeuralVoiceEngine
 import com.imd.mausam2.domain.SmartGlanceAI
 import com.imd.mausam2.ui.components.NavTab
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,10 +16,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.*
 
-class MausamViewModel(application: Application) : AndroidViewModel(application), TextToSpeech.OnInitListener {
+class MausamViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = WeatherRepository(application)
     private val prefs = application.getSharedPreferences("mausam2_user_prefs", Application.MODE_PRIVATE)
+    private val voiceEngine = MausamNeuralVoiceEngine(application)
 
     private val _weatherData = MutableStateFlow<CompleteWeatherData?>(null)
     val weatherData: StateFlow<CompleteWeatherData?> = _weatherData.asStateFlow()
@@ -40,8 +40,7 @@ class MausamViewModel(application: Application) : AndroidViewModel(application),
     private val _smartGlanceText = MutableStateFlow("")
     val smartGlanceText: StateFlow<String> = _smartGlanceText.asStateFlow()
 
-    private val _isPlayingAudio = MutableStateFlow(false)
-    val isPlayingAudio: StateFlow<Boolean> = _isPlayingAudio.asStateFlow()
+    val isPlayingAudio: StateFlow<Boolean> = voiceEngine.isPlaying
 
     // Tab Navigation State
     private val _currentTab = MutableStateFlow(NavTab.HOME)
@@ -51,39 +50,9 @@ class MausamViewModel(application: Application) : AndroidViewModel(application),
     private val _showOnboarding = MutableStateFlow(!prefs.getBoolean("has_completed_onboarding", false))
     val showOnboarding: StateFlow<Boolean> = _showOnboarding.asStateFlow()
 
-    private var tts: TextToSpeech? = null
-    private var ttsReady = false
-
     init {
-        tts = TextToSpeech(application, this)
+        voiceEngine.setLanguage(_isHindi.value)
         loadWeather(WeatherRepository.PRESET_CITIES.first())
-    }
-
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            ttsReady = true
-            updateTtsLanguage(_isHindi.value)
-            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) {
-                    _isPlayingAudio.value = true
-                }
-                override fun onDone(utteranceId: String?) {
-                    _isPlayingAudio.value = false
-                }
-                override fun onError(utteranceId: String?) {
-                    _isPlayingAudio.value = false
-                }
-            })
-        }
-    }
-
-    private fun updateTtsLanguage(hindi: Boolean) {
-        if (!ttsReady) return
-        val loc = if (hindi) Locale("hi", "IN") else Locale.US
-        val res = tts?.setLanguage(loc)
-        if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
-            tts?.language = Locale.US
-        }
     }
 
     fun loadWeather(location: LocationInfo, forceRefresh: Boolean = false) {
@@ -121,7 +90,7 @@ class MausamViewModel(application: Application) : AndroidViewModel(application),
         val newLang = !_isHindi.value
         _isHindi.value = newLang
         prefs.edit().putBoolean("pref_is_hindi", newLang).apply()
-        updateTtsLanguage(newLang)
+        voiceEngine.setLanguage(newLang)
         _weatherData.value?.let { updateSmartGlance(it) }
     }
 
@@ -137,14 +106,12 @@ class MausamViewModel(application: Application) : AndroidViewModel(application),
     }
 
     fun toggleAudio() {
-        if (_isPlayingAudio.value) {
-            tts?.stop()
-            _isPlayingAudio.value = false
+        if (voiceEngine.isPlaying.value) {
+            voiceEngine.stop()
         } else {
             val text = _smartGlanceText.value
-            if (text.isNotBlank() && ttsReady) {
-                _isPlayingAudio.value = true
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "mausam_speech_id")
+            if (text.isNotBlank()) {
+                voiceEngine.speak(text, _isHindi.value)
             }
         }
     }
@@ -176,7 +143,6 @@ class MausamViewModel(application: Application) : AndroidViewModel(application),
 
     override fun onCleared() {
         super.onCleared()
-        tts?.stop()
-        tts?.shutdown()
+        voiceEngine.shutdown()
     }
 }

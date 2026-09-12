@@ -182,8 +182,10 @@ fun MausamDashboard(
 
                             NavTab.PERSONAS -> {
                                 PersonasScreen(
+                                    data = data,
                                     activePersonas = activePersonas,
                                     isHindi = isHindi,
+                                    viewModel = viewModel,
                                     onOpenOnboarding = { viewModel.triggerOnboarding() }
                                 )
                             }
@@ -194,8 +196,12 @@ fun MausamDashboard(
         }
     }
 
-    // 1. FIRST-TIME OR MANUAL ONBOARDING POP-UP DIALOG
-    if (showOnboarding) {
+    // 1. FIRST-TIME OR MANUAL ONBOARDING FULL-SCREEN OVERLAY
+    AnimatedVisibility(
+        visible = showOnboarding,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
         OnboardingDialog(
             initialSelected = activePersonas,
             isHindi = isHindi,
