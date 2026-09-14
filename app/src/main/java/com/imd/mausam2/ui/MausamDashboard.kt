@@ -1,5 +1,6 @@
 package com.imd.mausam2.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,6 +55,11 @@ fun MausamDashboard(
         SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
     }
 
+    // Hardware / System Gesture Back Button Handling: return to main weather interface
+    BackHandler(enabled = currentTab != NavTab.HOME) {
+        viewModel.selectTab(NavTab.HOME)
+    }
+
     AtmosphericBackground(
         weatherCode = currentCode,
         wallpaperTheme = wallpaperTheme,
@@ -86,6 +92,9 @@ fun MausamDashboard(
                             onRefreshClick = {
                                 viewModel.loadWeather(data.location, forceRefresh = true)
                             },
+                            currentTab = currentTab,
+                            onHomeClick = { viewModel.selectTab(NavTab.HOME) },
+                            isHindi = isHindi,
                             isLoading = isLoading
                         )
                     }
@@ -127,8 +136,19 @@ fun MausamDashboard(
                                         )
                                     }
 
+                                    // 2.5 MAUSAM 2.0 CORE FEATURES QUICK ACCESS HUB
                                     item {
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                        CoreFeaturesQuickHub(
+                                            isHindi = isHindi,
+                                            onRadarClick = { viewModel.selectTab(NavTab.RADAR) },
+                                            onAlertsClick = { viewModel.selectTab(NavTab.ALERTS) },
+                                            onAssistantClick = { viewModel.selectTab(NavTab.PERSONAS) },
+                                            onWizardClick = { viewModel.triggerOnboarding() }
+                                        )
+                                    }
+
+                                    item {
+                                        Spacer(modifier = Modifier.height(6.dp))
                                     }
 
                                     // 3. MODERN INSIGHT CARDS (Comfort, Packing, UV, Air Quality, Damini, Agromet)
@@ -336,11 +356,19 @@ fun MausamDashboard(
                             }
 
                             NavTab.RADAR -> {
-                                RadarScreen(data = data, isHindi = isHindi)
+                                RadarScreen(
+                                    data = data,
+                                    isHindi = isHindi,
+                                    onBack = { viewModel.selectTab(NavTab.HOME) }
+                                )
                             }
 
                             NavTab.ALERTS -> {
-                                AlertsScreen(data = data, isHindi = isHindi)
+                                AlertsScreen(
+                                    data = data,
+                                    isHindi = isHindi,
+                                    onBack = { viewModel.selectTab(NavTab.HOME) }
+                                )
                             }
 
                             NavTab.PERSONAS -> {
@@ -349,7 +377,8 @@ fun MausamDashboard(
                                     activePersonas = activePersonas,
                                     isHindi = isHindi,
                                     viewModel = viewModel,
-                                    onOpenOnboarding = { viewModel.triggerOnboarding() }
+                                    onOpenOnboarding = { viewModel.triggerOnboarding() },
+                                    onBack = { viewModel.selectTab(NavTab.HOME) }
                                 )
                             }
                         }
@@ -368,6 +397,7 @@ fun MausamDashboard(
         OnboardingDialog(
             initialSelected = activePersonas,
             isHindi = isHindi,
+            onDismiss = { viewModel.dismissOnboarding() },
             onComplete = { selectedSet ->
                 viewModel.completeOnboarding(selectedSet)
             }

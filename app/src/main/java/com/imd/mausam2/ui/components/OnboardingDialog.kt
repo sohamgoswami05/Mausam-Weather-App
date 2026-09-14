@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,14 +44,13 @@ data class PersonaCardInfo(
 fun OnboardingDialog(
     initialSelected: Set<PersonaType>,
     isHindi: Boolean,
+    onDismiss: () -> Unit = {},
     onComplete: (Set<PersonaType>) -> Unit
 ) {
     var selectedPersonas by remember { mutableStateOf(initialSelected.toMutableSet()) }
 
     BackHandler {
-        if (selectedPersonas.isNotEmpty()) {
-            onComplete(selectedPersonas)
-        }
+        onDismiss()
     }
 
     val personaCards = remember {
@@ -146,14 +146,30 @@ fun OnboardingDialog(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 12.dp)
             ) {
-                // Header
+                // Header with Top-Left Back Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.12f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back to Main",
+                            tint = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(SkyCyan.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
@@ -162,21 +178,21 @@ fun OnboardingDialog(
                             imageVector = Icons.Default.DashboardCustomize,
                             contentDescription = "Personalize",
                             tint = SkyCyan,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isHindi) "मौसम 2.0 में आपका स्वागत है!" else "Welcome to Mausam 2.0!",
+                            text = if (isHindi) "मौसम 2.0 विज़ार्ड" else "Mausam 2.0 Wizard",
                             color = Color.White,
-                            fontSize = 20.sp,
+                            fontSize = 19.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (isHindi) "अपनी जीवनशैली के अनुसार कार्ड चुनें:" else "Select what matters most to your routine:",
+                            text = if (isHindi) "कार्ड प्राथमिकताओं का चयन करें:" else "Select what matters most to your routine:",
                             color = SkyCyan,
-                            fontSize = 13.sp
+                            fontSize = 12.sp
                         )
                     }
                 }

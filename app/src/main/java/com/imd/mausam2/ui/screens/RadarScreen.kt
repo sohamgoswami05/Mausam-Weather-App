@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -107,7 +108,11 @@ private fun getRadarStationInfo(cityName: String): RadarStationMeta {
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun RadarScreen(data: CompleteWeatherData, isHindi: Boolean) {
+fun RadarScreen(
+    data: CompleteWeatherData,
+    isHindi: Boolean,
+    onBack: () -> Unit = {}
+) {
     var selectedLayer by remember { mutableStateOf("dwr") }
     var isPlayingSweep by remember { mutableStateOf(true) }
     var nowcastIndex by remember { mutableStateOf(4) }
@@ -134,17 +139,34 @@ fun RadarScreen(data: CompleteWeatherData, isHindi: Boolean) {
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .padding(bottom = 32.dp)
     ) {
-        // 1. Header
+        // 1. Header with Top-Left Back Button
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.12f))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back to Main",
+                    tint = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (isHindi) "आईएमडी डॉपलर मौसम रडार" else "IMD Doppler Weather Radar",
                     color = Color.White,
-                    fontSize = 20.sp,
+                    fontSize = 19.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(

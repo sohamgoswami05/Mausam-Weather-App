@@ -90,6 +90,10 @@ class MausamViewModel(application: Application) : AndroidViewModel(application) 
         _showOnboarding.value = true
     }
 
+    fun dismissOnboarding() {
+        _showOnboarding.value = false
+    }
+
     fun completeOnboarding(newPersonas: Set<PersonaType>) {
         _activePersonas.value = newPersonas
         val ids = newPersonas.map { it.id }.toSet()

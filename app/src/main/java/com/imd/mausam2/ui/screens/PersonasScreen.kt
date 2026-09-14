@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,7 +41,8 @@ fun PersonasScreen(
     activePersonas: Set<PersonaType>,
     isHindi: Boolean,
     viewModel: MausamViewModel,
-    onOpenOnboarding: () -> Unit
+    onOpenOnboarding: () -> Unit,
+    onBack: () -> Unit = {}
 ) {
     var selectedTravelCity by remember { mutableStateOf("London") }
     var showChatbot by remember { mutableStateOf(false) }
@@ -62,20 +64,43 @@ fun PersonasScreen(
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Header
-            Text(
-                text = if (isHindi) "उपभोक्ता प्रोफाइल एवं स्मार्ट टूल्स" else "Consumer Personas & Tools",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = if (isHindi) "अपनी दैनिक आवश्यकताओं के अनुसार प्रोफाइल अनुकूलित करें" else "Tailor your weather dashboard to your exact daily routine",
-                color = SkyCyan,
-                fontSize = 12.sp
-            )
+            // Header with Top-Left Back Button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.12f))
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back to Main",
+                        tint = Color.White
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = if (isHindi) "उपभोक्ता प्रोफाइल एवं AI टूल्स" else "Consumer Personas & AI Tools",
+                        color = Color.White,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (isHindi) "अपनी दैनिक आवश्यकताओं के अनुसार प्रोफाइल अनुकूलित करें" else "Tailor your weather dashboard to your exact daily routine",
+                        color = SkyCyan,
+                        fontSize = 11.sp
+                    )
+                }
+            }
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),

@@ -6,12 +6,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,27 +30,54 @@ import com.imd.mausam2.ui.components.GlassCard
 import com.imd.mausam2.ui.theme.*
 
 @Composable
-fun AlertsScreen(data: CompleteWeatherData, isHindi: Boolean) {
+fun AlertsScreen(
+    data: CompleteWeatherData,
+    isHindi: Boolean,
+    onBack: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Header
-        Text(
-            text = if (isHindi) "आईएमडी चेतावनी बुलेटिन" else "Official IMD Warning Bulletins",
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = if (isHindi) "भारत मौसम विज्ञान विभाग (MoES) द्वारा जारी" else "Issued by India Meteorological Department (MoES)",
-            color = SkyCyan,
-            fontSize = 12.sp
-        )
+        // Top Header with Back Button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.12f))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back to Main",
+                    tint = Color.White
+                )
+            }
 
-        Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column {
+                Text(
+                    text = if (isHindi) "आईएमडी चेतावनी बुलेटिन" else "Official IMD Warning Bulletins",
+                    color = Color.White,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = if (isHindi) "भारत मौसम विज्ञान विभाग (MoES) द्वारा जारी" else "Issued by India Meteorological Department (MoES)",
+                    color = SkyCyan,
+                    fontSize = 11.sp
+                )
+            }
+        }
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
