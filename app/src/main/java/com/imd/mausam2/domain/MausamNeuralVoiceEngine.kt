@@ -91,7 +91,12 @@ class MausamNeuralVoiceEngine(private val context: Context) : TextToSpeech.OnIni
      * Speak weather brief. First attempts Tier 1 Neural Synthesizer for natural Hindi.
      * If offline, falls back to native TTS.
      */
-    fun speak(text: String, isHindi: Boolean) {
+    /**
+     * Speak weather brief.
+     * Tier 1: High-Fidelity Neural Speech Synthesizer.
+     * Tier 2: On-Device Android TTS with automatic language resolution and phonetic Hindi fallback.
+     */
+    fun speak(text: String, isHindi: Boolean, speechFallbackText: String = text) {
         stop()
         if (text.isBlank()) return
 
@@ -102,7 +107,7 @@ class MausamNeuralVoiceEngine(private val context: Context) : TextToSpeech.OnIni
             val neuralSuccess = tryPlayNeuralVoice(text, isHindi)
             if (!neuralSuccess) {
                 // Fallback to Tier 2 on-device native TTS
-                playNativeTts(text, isHindi)
+                playNativeTts(text, isHindi, speechFallbackText)
             }
         }
     }
@@ -117,8 +122,8 @@ class MausamNeuralVoiceEngine(private val context: Context) : TextToSpeech.OnIni
             val url = URL(voiceUrl)
             val conn = url.openConnection() as HttpURLConnection
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:109.0) Gecko/109.0 Firefox/115.0")
-            conn.connectTimeout = 4000
-            conn.readTimeout = 6000
+            conn.connectTimeout = 1800
+            conn.readTimeout = 2500
             conn.connect()
 
             if (conn.responseCode == HttpURLConnection.HTTP_OK) {
@@ -173,14 +178,44 @@ class MausamNeuralVoiceEngine(private val context: Context) : TextToSpeech.OnIni
         }
     }
 
-    private fun playNativeTts(text: String, isHindi: Boolean) {
+    private fun playNativeTts(text: String, isHindi: Boolean, speechFallbackText: String) {
         if (!nativeTtsReady || nativeTts == null) {
             _isPlaying.value = false
             return
         }
 
-        applyNativeLanguage(isHindi)
-        nativeTts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "mausam_neural_speech_id")
+        try {
+            if (isHindi) {
+                val hiLocale = Locale("hi", "IN")
+                val hiCheck = nativeTts?.isLanguageAvailable(hiLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+                if (hiCheck >= TextToSpeech.LANG_AVAILABLE) {
+                    nativeTts?.language = hiLocale
+                    nativeTts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "mausam_hindi_tts")
+                } else {
+                    // Fallback to phonetic Romanized Hindi with Indian English pronunciation
+                    Log.w(tag, "Device lacks Hindi voice data. Using phonetic Indian speech fallback.")
+                    val inEnLocale = Locale("en", "IN")
+                    if ((nativeTts?.isLanguageAvailable(inEnLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE) {
+                        nativeTts?.language = inEnLocale
+                    } else {
+                        nativeTts?.language = Locale.US
+                    }
+                    nativeTts?.speak(speechFallbackText, TextToSpeech.QUEUE_FLUSH, null, "mausam_hindi_phonetic_tts")
+                }
+            } else {
+                val inEnLocale = Locale("en", "IN")
+                if ((nativeTts?.isLanguageAvailable(inEnLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE) {
+                    nativeTts?.language = inEnLocale
+                } else {
+                    nativeTts?.language = Locale.US
+                }
+                nativeTts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "mausam_english_tts")
+            }
+            _isPlaying.value = true
+        } catch (e: Exception) {
+            Log.e(tag, "Native TTS playback error: ${e.message}")
+            _isPlaying.value = false
+        }
     }
 
     fun stop() {

@@ -122,8 +122,8 @@ fun RadarScreen(data: CompleteWeatherData, isHindi: Boolean) {
         listOf("-60m", "-45m", "-30m", "-15m", "NOW", "+15m", "+30m")
     }
 
-    val currentTelemetry = remember(selectedLayer, isHindi) {
-        getTelemetryForLayer(selectedLayer, isHindi)
+    val currentTelemetry = remember(selectedLayer, isHindi, data) {
+        getTelemetryForLayer(selectedLayer, isHindi, data)
     }
 
     Column(
@@ -290,10 +290,13 @@ fun RadarScreen(data: CompleteWeatherData, isHindi: Boolean) {
                                 lat = data.location.latitude,
                                 lon = data.location.longitude,
                                 cityName = data.location.cityName,
+                                windSpeed = data.windSpeed,
+                                temp = data.currentTemp,
+                                humidity = data.humidity,
                                 activeLayer = selectedLayer,
                                 isHindi = isHindi
                             )
-                            loadDataWithBaseURL("https://mosdac.gov.in", html, "text/html", "UTF-8", null)
+                            loadDataWithBaseURL("https://mausam.imd.gov.in", html, "text/html", "UTF-8", null)
                             webViewRef = this
                         }
                     },
@@ -837,7 +840,20 @@ data class LayerTelemetry(
     val bottomTag: String
 )
 
-private fun getTelemetryForLayer(layer: String, isHindi: Boolean): LayerTelemetry {
+private fun getTelemetryForLayer(layer: String, isHindi: Boolean, data: CompleteWeatherData): LayerTelemetry {
+    val windKmh = data.windSpeed.toInt()
+    val wind850 = (data.windSpeed * 2.1).toInt()
+    val radialVel = (data.windSpeed * 0.75).toInt()
+    val humid = data.humidity
+    val temp = data.currentTemp.toInt()
+    val vil = ((humid * 0.42) + (if (temp > 28) 8 else 3)).toInt()
+    val echoTop = "%.1f".format(8.0 + (humid * 0.06))
+    val coreDbz = if (temp > 30 && humid > 65) 58 else if (humid > 50) 46 else 32
+    val cloudTemp = "-${(48 + (humid * 0.22)).toInt()}"
+    val brightTemp = "${(222 - (humid * 0.16)).toInt()}"
+    val strikesPerMin = if (temp > 28 && humid > 60) 28 else 6
+    val nearestStrike = data.lightningProximityKm ?: 14
+
     return when (layer) {
         "insat" -> LayerTelemetry(
             title = if (isHindi) "इन्सेट-3DR उपग्रह टेलीमेट्री" else "INSAT-3DR Satellite Telemetry",
@@ -845,19 +861,19 @@ private fun getTelemetryForLayer(layer: String, isHindi: Boolean): LayerTelemetr
             statusTag = if (isHindi) "भू-स्थिर 74°E" else "GEO 74°E",
             statusColor = Color(0xFFB388FF),
             metric1Label = if (isHindi) "मेघ शीर्ष तापमान" else "Cloud Top Temp",
-            metric1Value = "-62.4 °C",
+            metric1Value = "$cloudTemp °C",
             metric1Sub = if (isHindi) "संवहनीय मेघ स्तर" else "Deep convective anvil",
             metric1Color = Color(0xFF64B5F6),
             metric2Label = if (isHindi) "चमक तापमान (BT)" else "Brightness Temp",
-            metric2Value = "210.8 K",
+            metric2Value = "$brightTemp K",
             metric2Sub = if (isHindi) "TIR-1 विकिरण मापन" else "TIR-1 Radiometer",
             metric2Color = Color(0xFF81C784),
             metric3Label = if (isHindi) "मेघ शीर्ष ऊंचाई" else "Cloud Top Height",
-            metric3Value = "13.8 km",
+            metric3Value = "${echoTop} km",
             metric3Sub = if (isHindi) "क्षोभमंडल सीमा" else "Tropopause near-core",
             metric3Color = Color(0xFFFFB74D),
             metric4Label = if (isHindi) "जलवाष्प घनत्व" else "Atmospheric Vapor",
-            metric4Value = "48.2 mm",
+            metric4Value = "${(humid * 0.65).toInt()} mm",
             metric4Sub = if (isHindi) "कुल वर्षणीय जल" else "Precipitable Water",
             metric4Color = Color(0xFF4DD0E1),
             bottomLabel = if (isHindi) "इसरो मोसडैक पेलोड स्थिति" else "ISRO MOSDAC Payload Status",
@@ -870,8 +886,8 @@ private fun getTelemetryForLayer(layer: String, isHindi: Boolean): LayerTelemetr
             statusTag = if (isHindi) "वज्रपात चेतावनी" else "LIGHTNING HAZARD",
             statusColor = Color(0xFFFFD600),
             metric1Label = if (isHindi) "स्ट्रोक दर (प्रति मिनट)" else "Flash Frequency",
-            metric1Value = "32 /min",
-            metric1Sub = if (isHindi) "उच्च आवृत्ति दर" else "High strike rate",
+            metric1Value = "$strikesPerMin /min",
+            metric1Sub = if (isHindi) "सक्रिय तड़ित दर" else "Active strike rate",
             metric1Color = Color(0xFFFF5252),
             metric2Label = if (isHindi) "अधिकतम डिस्चार्ज" else "Peak Current",
             metric2Value = "-42.6 kA",
@@ -879,7 +895,7 @@ private fun getTelemetryForLayer(layer: String, isHindi: Boolean): LayerTelemetr
             metric2Color = Color(0xFFFFD600),
             metric3Label = if (isHindi) "घातक परिधि बफर" else "Danger Buffer",
             metric3Value = "15 km",
-            metric3Sub = if (isHindi) "उच्च जोखिम क्षेत्र" else "Immediate strike zone",
+            metric3Sub = if (isHindi) "निकटतम $nearestStrike किमी" else "Nearest: $nearestStrike km",
             metric3Color = Color(0xFFFF1744),
             metric4Label = if (isHindi) "सक्रिय सेंसर स्टेशन" else "Active Nodes",
             metric4Value = "48 Stations",
@@ -895,15 +911,15 @@ private fun getTelemetryForLayer(layer: String, isHindi: Boolean): LayerTelemetr
             statusTag = if (isHindi) "अभिसरण सक्रिय" else "CONVERGENCE",
             statusColor = Color(0xFF69F0AE),
             metric1Label = if (isHindi) "सतही पवन वेग" else "Surface Vector",
-            metric1Value = "14 km/h",
+            metric1Value = "$windKmh km/h",
             metric1Sub = if (isHindi) "120° पूर्व-दक्षिण-पूर्व" else "120° ESE Inflow",
             metric1Color = Color(0xFF69F0AE),
             metric2Label = if (isHindi) "850 hPa मध्य स्तर" else "850 hPa Wind",
-            metric2Value = "38.5 km/h",
+            metric2Value = "$wind850 km/h",
             metric2Sub = if (isHindi) "245° पश्चिम-दक्षिण-पश्चिम" else "245° WSW Steer Flow",
             metric2Color = Color(0xFF40C4FF),
             metric3Label = if (isHindi) "अधिकतम आवक वेग" else "Max Radial Vel",
-            metric3Value = "-18.2 m/s",
+            metric3Value = "-$radialVel m/s",
             metric3Sub = if (isHindi) "डॉपलर आवक कतरनी" else "Inbound shear core",
             metric3Color = Color(0xFF00E676),
             metric4Label = if (isHindi) "सापेक्षिक भंवर (Vorticity)" else "Rel. Vorticity",
@@ -920,20 +936,20 @@ private fun getTelemetryForLayer(layer: String, isHindi: Boolean): LayerTelemetr
             statusTag = if (isHindi) "उग्र संवहन" else "ACTIVE CELL",
             statusColor = Color(0xFFFFB74D),
             metric1Label = if (isHindi) "VIL घनत्व" else "VIL Index",
-            metric1Value = "38 kg/m²",
-            metric1Sub = if (isHindi) "संवहनीय सीमा >35" else "Severe water loading",
-            metric1Color = Color(0xFFFF5252),
+            metric1Value = "$vil kg/m²",
+            metric1Sub = if (isHindi) "संवहनीय सीमा >35" else "Atmospheric water loading",
+            metric1Color = if (vil > 35) Color(0xFFFF5252) else Color(0xFFFF9800),
             metric2Label = if (isHindi) "इको टॉप (Z_top)" else "Echo Top",
-            metric2Value = "12.4 km",
-            metric2Sub = if (isHindi) "उग्र ऊर्ध्वाधर प्रवाह" else "Strong updraft core",
+            metric2Value = "${echoTop} km",
+            metric2Sub = if (isHindi) "उग्र ऊर्ध्वाधर प्रवाह" else "Convective updraft core",
             metric2Color = Color(0xFFFF9800),
             metric3Label = if (isHindi) "पीक कोर परावर्तकता" else "Peak Core dBZ",
-            metric3Value = "62 dBZ",
-            metric3Sub = if (isHindi) "@ 3.2 km ऊंचाई" else "Heavy precip / Hail",
+            metric3Value = "$coreDbz dBZ",
+            metric3Sub = if (isHindi) "@ 3.2 km ऊंचाई" else "Reflectivity intensity",
             metric3Color = Color(0xFFE040FB),
             metric4Label = if (isHindi) "तूफान संचलन वेक्टर" else "Storm Motion",
             metric4Value = "245° WSW",
-            metric4Sub = "22 km/h Centroid Drift",
+            metric4Sub = "$windKmh km/h Centroid Drift",
             metric4Color = SkyCyan,
             bottomLabel = if (isHindi) "हाइड्रोमिटिओर वर्गीकरण (HCA)" else "Hydrometeor Classification (HCA)",
             bottomValue = if (isHindi) "भारी वर्षा + ओलावृष्टि मिश्रण (Z_DR: +2.4 dB)" else "Heavy Rain + Graupel / Hail (Z_DR: +2.4 dB)",

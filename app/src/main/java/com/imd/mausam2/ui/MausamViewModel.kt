@@ -169,13 +169,17 @@ class MausamViewModel(application: Application) : AndroidViewModel(application) 
             voiceEngine.stop()
         }
         val data = _weatherData.value ?: return
-        val speechText = if (isHindi) {
-            SmartGlanceAI.generateInsightHi(data, _activePersonas.value)
+        if (isHindi) {
+            val textDevanagari = SmartGlanceAI.generateInsightHi(data, _activePersonas.value)
+            val textPhonetic = SmartGlanceAI.generateInsightHiSpeech(data, _activePersonas.value)
+            if (textDevanagari.isNotBlank()) {
+                voiceEngine.speak(textDevanagari, isHindi = true, speechFallbackText = textPhonetic)
+            }
         } else {
-            SmartGlanceAI.generateInsightEn(data, _activePersonas.value)
-        }
-        if (speechText.isNotBlank()) {
-            voiceEngine.speak(speechText, isHindi)
+            val textEn = SmartGlanceAI.generateInsightEn(data, _activePersonas.value)
+            if (textEn.isNotBlank()) {
+                voiceEngine.speak(textEn, isHindi = false, speechFallbackText = textEn)
+            }
         }
     }
 

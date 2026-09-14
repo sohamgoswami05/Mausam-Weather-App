@@ -87,4 +87,62 @@ object SmartGlanceAI {
 
         return snippets.joinToString(" ")
     }
+
+    fun generateInsightHiSpeech(data: CompleteWeatherData, activePersonas: Set<PersonaType>): String {
+        val snippets = mutableListOf<String>()
+
+        snippets.add("${data.location.cityName} mein aaj: ${data.currentTemp.toInt()} degree Celsius aur ${toRomanHindi(data.conditionTextHi)}.")
+
+        if (activePersonas.contains(PersonaType.HEALTH)) {
+            val aqiNote = when {
+                data.aqi > 300 -> "Vayu gunvatta atyant gambhir hai, AQI ${data.aqi}, N95 mask avashya pehnein."
+                data.aqi > 200 -> "Vayu gunvatta kharab hai, AQI ${data.aqi}, baahar adhik samay na bitayein."
+                else -> "Vayu gunvatta santoshjanak hai, AQI ${data.aqi}."
+            }
+            snippets.add(aqiNote)
+        }
+
+        if (activePersonas.contains(PersonaType.FITNESS)) {
+            snippets.add("Daud ke liye score ${data.runScore} out of 100 hai. Uttam samay ${data.bestRunningWindow} rahega.")
+        }
+
+        if (activePersonas.contains(PersonaType.BEACH)) {
+            snippets.add("Samudra ki sthiti: ${toRomanHindi(data.seaConditionHi)} evam lehrein ${data.waveHeight} meter.")
+        }
+
+        if (activePersonas.contains(PersonaType.AGRICULTURE)) {
+            snippets.add(if (data.pesticideSpraySafe) "Krishi salah: Aaj keetnashak chhidkaav ke liye anukool mausam." else "Krishi salah: Barish ki sambhavna, chhidkaav sthagit karein.")
+        }
+
+        if (activePersonas.contains(PersonaType.COMMUTE) || activePersonas.contains(PersonaType.PARENTS)) {
+            if (data.visibilityMeters < 300) {
+                snippets.add("School evam office yatra ke dauran kohre se savdhan rahein, drishyata ${data.visibilityMeters} meter.")
+            }
+        }
+
+        if (snippets.size == 1) {
+            snippets.add(toRomanHindi(data.imdAlert.adviceHi))
+        }
+
+        return snippets.joinToString(" ")
+    }
+
+    private fun toRomanHindi(devanagari: String): String {
+        return devanagari
+            .replace("साफ़ आसमान", "Saaf Aasmaan")
+            .replace("अधिकांश साफ़", "Adhikansh Saaf")
+            .replace("आंशिक बादल", "Aanshik Baadal")
+            .replace("घने बादल", "Ghane Baadal")
+            .replace("हल्की बारिश", "Halki Baarish")
+            .replace("मध्यम बारिश", "Madhyam Baarish")
+            .replace("भारी बारिश", "Bhaari Baarish")
+            .replace("गरज के साथ बौछारें", "Garaj ke saath bauchharein")
+            .replace("शांत", "Shaant")
+            .replace("सावधान", "Saavdhan")
+            .replace("अशांत", "Ashaant")
+            .replace("कोई चेतावनी नहीं", "Koi chetavani nahi")
+            .replace("सतर्क रहें", "Satark rahein")
+            .replace("तैयार रहें", "Taiyaar rahein")
+            .replace("कार्रवाई करें", "Karyawahi karein")
+    }
 }

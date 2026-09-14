@@ -293,7 +293,63 @@ fun MausamSettingsScreen(
             }
 
             // ==========================================
-            // 3. UNITS SECTION (Ruler / Measure Squircle)
+            // 3. MAUSAM 2.0 CORE FEATURES
+            // ==========================================
+            SettingsSectionHeader(
+                icon = Icons.Default.DashboardCustomize,
+                iconBg = SkyCyan,
+                title = if (isHindi) "मौसम 2.0 मुख्य सुविधाएं" else "Mausam 2.0 Core Features",
+                subtitle = if (isHindi) "इसरो रडार, आईएमडी चेतावनियां एवं 7-दिवसीय AI चैटबॉट" else "Radar, IMD Warning Alerts & Conversational Assistant"
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SettingsFeatureCard(
+                    title = if (isHindi) "इसरो मोसडैक एवं आईएमडी रडार" else "ISRO MOSDAC & IMD Doppler Radar",
+                    subtitle = if (isHindi) "लाइव डॉपलर अबकास्ट, इन्सेट-3DR एवं दामिनी ग्रिड" else "Live DWR nowcast, INSAT-3DR GIS & lightning grid",
+                    icon = Icons.Default.Radar,
+                    iconTint = SkyCyan,
+                    onClick = {
+                        viewModel.selectTab(NavTab.RADAR)
+                        onBack()
+                    }
+                )
+
+                SettingsFeatureCard(
+                    title = if (isHindi) "आईएमडी 4-स्तरीय चेतावनी अलर्ट" else "IMD 4-Stage Warning Alerts",
+                    subtitle = if (isHindi) "लाल, नारंगी एवं पीली आधिकारिक मौसम चेतावनियां" else "Red, orange & yellow regional advisories",
+                    icon = Icons.Default.NotificationsActive,
+                    iconTint = Color(0xFFF87171),
+                    onClick = {
+                        viewModel.selectTab(NavTab.ALERTS)
+                        onBack()
+                    }
+                )
+
+                SettingsFeatureCard(
+                    title = if (isHindi) "प्रोफाइल एवं 7-दिवसीय AI चैटबॉट" else "Profiles & 7-Day AI Chatbot",
+                    subtitle = if (isHindi) "मौसम प्रश्नोत्तरी एवं सात दिवसीय एआई विश्लेषण" else "Ask questions about next 7 days in Kolkata/Delhi",
+                    icon = Icons.Default.SmartToy,
+                    iconTint = Color(0xFFA855F7),
+                    onClick = {
+                        viewModel.selectTab(NavTab.PERSONAS)
+                        onBack()
+                    }
+                )
+
+                SettingsFeatureCard(
+                    title = if (isHindi) "ऑनबोर्डिंग विज़ार्ड पुनः चलाएं" else "Re-run Persona Onboarding Wizard",
+                    subtitle = if (isHindi) "प्रारंभिक सेटअप और कार्ड अनुकूलन" else "Reset and re-configure your personas",
+                    icon = Icons.Default.Tune,
+                    iconTint = SunGold,
+                    onClick = {
+                        viewModel.triggerOnboarding()
+                        onBack()
+                    }
+                )
+            }
+
+            // ==========================================
+            // 4. UNITS SECTION (Ruler / Measure Squircle)
             // ==========================================
             SettingsSectionHeader(
                 icon = Icons.Default.Straighten,
@@ -349,7 +405,7 @@ fun MausamSettingsScreen(
             }
 
             // ==========================================
-            // 4. LANGUAGE SECTION (Globe Squircle)
+            // 5. LANGUAGE SECTION (Globe Squircle)
             // ==========================================
             SettingsSectionHeader(
                 icon = Icons.Default.Language,
@@ -405,7 +461,7 @@ fun MausamSettingsScreen(
             }
 
             // ==========================================
-            // 5. AUDIO SPEECH BRIEFING (Neural Voice)
+            // 6. AUDIO SPEECH BRIEFING (Neural Voice)
             // ==========================================
             SettingsSectionHeader(
                 icon = Icons.AutoMirrored.Filled.VolumeUp,
@@ -503,7 +559,7 @@ fun MausamSettingsScreen(
             }
 
             // ==========================================
-            // 6. DAILY BRIEFS & SCHEDULES (Bell, Moon, Bus)
+            // 7. DAILY BRIEFS & SCHEDULES (Bell, Moon, Bus)
             // ==========================================
             SettingsSectionHeader(
                 icon = Icons.Default.NotificationsActive,
@@ -624,62 +680,6 @@ fun MausamSettingsScreen(
                         Text(text = "10:00", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp))
                     }
                 }
-            }
-
-            // ==========================================
-            // 7. PRESERVED ADVANCED IMD FEATURES
-            // ==========================================
-            SettingsSectionHeader(
-                icon = Icons.Default.DashboardCustomize,
-                iconBg = SkyCyan,
-                title = if (isHindi) "मौसम 2.0 मुख्य सुविधाएं" else "Mausam 2.0 Core Features",
-                subtitle = if (isHindi) "इसरो रडार, आईएमडी चेतावनियां एवं 7-दिवसीय AI चैटबॉट" else "Radar, IMD Warning Alerts & Conversational Assistant"
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SettingsFeatureCard(
-                    title = if (isHindi) "इसरो मोसडैक एवं आईएमडी रडार" else "ISRO MOSDAC & IMD Doppler Radar",
-                    subtitle = if (isHindi) "लाइव डॉपलर अबकास्ट, इन्सेट-3DR एवं दामिनी ग्रिड" else "Live DWR nowcast, INSAT-3DR GIS & lightning grid",
-                    icon = Icons.Default.Radar,
-                    iconTint = SkyCyan,
-                    onClick = {
-                        viewModel.selectTab(NavTab.RADAR)
-                        onBack()
-                    }
-                )
-
-                SettingsFeatureCard(
-                    title = if (isHindi) "आईएमडी 4-स्तरीय चेतावनी अलर्ट" else "IMD 4-Stage Warning Alerts",
-                    subtitle = if (isHindi) "लाल, नारंगी एवं पीली आधिकारिक मौसम चेतावनियां" else "Red, orange & yellow regional advisories",
-                    icon = Icons.Default.NotificationsActive,
-                    iconTint = Color(0xFFF87171),
-                    onClick = {
-                        viewModel.selectTab(NavTab.ALERTS)
-                        onBack()
-                    }
-                )
-
-                SettingsFeatureCard(
-                    title = if (isHindi) "प्रोफाइल एवं 7-दिवसीय AI चैटबॉट" else "Profiles & 7-Day AI Chatbot",
-                    subtitle = if (isHindi) "मौसम प्रश्नोत्तरी एवं सात दिवसीय एआई विश्लेषण" else "Ask questions about next 7 days in Kolkata/Delhi",
-                    icon = Icons.Default.SmartToy,
-                    iconTint = Color(0xFFA855F7),
-                    onClick = {
-                        viewModel.selectTab(NavTab.PERSONAS)
-                        onBack()
-                    }
-                )
-
-                SettingsFeatureCard(
-                    title = if (isHindi) "ऑनबोर्डिंग विज़ार्ड पुनः चलाएं" else "Re-run Persona Onboarding Wizard",
-                    subtitle = if (isHindi) "प्रारंभिक सेटअप और कार्ड अनुकूलन" else "Reset and re-configure your personas",
-                    icon = Icons.Default.Tune,
-                    iconTint = SunGold,
-                    onClick = {
-                        viewModel.triggerOnboarding()
-                        onBack()
-                    }
-                )
             }
 
             // ==========================================
