@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,10 +33,11 @@ fun MausamInsightCard(
     statusBadgeColor: Color = Color(0xFFFFB74D),
     subDetail: String,
     footerAttribution: String,
-    icon: ImageVector,
+    icon: ImageVector = Icons.Default.Info,
     iconBgColor: Color,
-    iconTintColor: Color,
+    iconTintColor: Color = Color.White,
     modifier: Modifier = Modifier,
+    customIcon: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
     Surface(
@@ -62,12 +65,16 @@ fun MausamInsightCard(
                     .background(iconBgColor),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = categoryTitle,
-                    tint = iconTintColor,
-                    modifier = Modifier.size(26.dp)
-                )
+                if (customIcon != null) {
+                    customIcon()
+                } else {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = categoryTitle,
+                        tint = iconTintColor,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(14.dp))

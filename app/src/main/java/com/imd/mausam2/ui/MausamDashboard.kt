@@ -142,7 +142,7 @@ fun MausamDashboard(
                                             statusBadgeBg = Color(0xFF5A3C26),
                                             statusBadgeColor = Color(0xFFFFB74D),
                                             subDetail = if (isHindi) "महसूस: ${data.feelsLike.toInt()}°C" else "Feels like ${data.feelsLike.toInt()}°",
-                                            footerAttribution = "IMD ${data.location.cityName} observation +",
+                                            footerAttribution = getObservatoryName(data.location.cityName),
                                             icon = Icons.Default.Eco,
                                             iconBgColor = Color(0xFF4A3425),
                                             iconTintColor = Color(0xFFF5D6C6)
@@ -182,7 +182,24 @@ fun MausamDashboard(
                                             footerAttribution = "Weather data by Open-Meteo.com • as of $currentTime",
                                             icon = Icons.Default.WbSunny,
                                             iconBgColor = Color(0xFF4A3C1A),
-                                            iconTintColor = Color(0xFFFEF08A)
+                                            iconTintColor = Color(0xFFFEF08A),
+                                            customIcon = {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.WbSunny,
+                                                        contentDescription = "UV",
+                                                        tint = Color(0xFFFEF08A),
+                                                        modifier = Modifier.size(30.dp)
+                                                    )
+                                                    Text(
+                                                        text = "UV",
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        color = Color(0xFF3A2800),
+                                                        letterSpacing = (-0.5).sp
+                                                    )
+                                                }
+                                            }
                                         )
                                     }
 
@@ -380,3 +397,17 @@ fun MausamDashboard(
         )
     }
 }
+
+private fun getObservatoryName(cityName: String): String {
+    val lower = cityName.lowercase()
+    return when {
+        lower.contains("kolkata") -> "IMD Kolkata-Alipore observation +"
+        lower.contains("delhi") -> "IMD Safdarjung observation +"
+        lower.contains("mumbai") -> "IMD Colaba-Santacruz observation +"
+        lower.contains("chennai") -> "IMD Meenambakkam observation +"
+        lower.contains("bengaluru") || lower.contains("bangalore") -> "IMD Bengaluru-HAL observation +"
+        lower.contains("pune") -> "IMD Pune-Shivajinagar observation +"
+        else -> "IMD $cityName observation +"
+    }
+}
+

@@ -211,10 +211,15 @@ fun HeroWeatherCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // 4. Live Observation Timestamp
+        // 4. Live Observation / Cache Timestamp
+        val statusText = if (data.isFromCache) {
+            if (isHindi) "रिफ्रेश नहीं हो सका • समय $currentTime" else "couldn't refresh • as of $currentTime"
+        } else {
+            if (isHindi) "अपडेटेड • समय $currentTime" else "as of $currentTime"
+        }
         Text(
-            text = if (isHindi) "समय $currentTime के अनुसार" else "as of $currentTime",
-            color = TextMuted,
+            text = statusText,
+            color = if (data.isFromCache) Color(0xFFFFD166) else TextMuted,
             fontSize = 11.sp,
             fontWeight = FontWeight.Normal
         )

@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -12,37 +13,59 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
+import java.util.*
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
  * WeatherHeroArt:
- * Renders a stylized 3D weather illustration featuring a glowing golden sun with
- * radiating sunbeams, overlapping fluffy cloud, and precipitation drops matching the
- * modern weather aesthetic.
+ * Authentic celestial weather illustration featuring:
+ * - Daytime: Radiant 3D golden sun with wide ethereal celestial halo and tapered rays.
+ * - Nighttime: Luminous silver moon with ethereal silver lunar halo and ambient twinkling stars.
+ * - Rain/Storm: Ambient blue mist and electric violet storm halos with animated precipitation.
  */
 @Composable
 fun WeatherHeroArt(
     weatherCode: Int,
-    modifier: Modifier = Modifier.size(130.dp)
+    modifier: Modifier = Modifier.size(135.dp)
 ) {
+    val currentHour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
+    val isDay = currentHour in 6..18
+
+    val isRainy = weatherCode in listOf(51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99) || weatherCode in listOf(1, 2, 3)
+    val isThunderstorm = weatherCode in listOf(95, 96, 99)
+
     val infiniteTransition = rememberInfiniteTransition(label = "weatherArt")
-    val sunPulse by infiniteTransition.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.04f,
+
+    // Breathing Celestial Halo Animation
+    val haloPulse by infiniteTransition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.08f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2200, easing = FastOutSlowInEasing),
+            animation = tween(3200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "sunPulse"
+        label = "haloPulse"
     )
+
+    // Twinkle / Lightning Flash Animation
+    val shimmerAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(if (isThunderstorm) 400 else 1800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmerAlpha"
+    )
+
+    // Raindrop Fall Animation
     val rainOffset by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 16f,
+        targetValue = 18f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
+            animation = tween(1100, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "rainDrops"
@@ -52,59 +75,186 @@ fun WeatherHeroArt(
         val w = size.width
         val h = size.height
 
-        // 1. Draw Glowing Radiant Sun (Positioned Upper Center-Right)
-        val sunCenter = Offset(w * 0.58f, h * 0.36f)
-        val sunRadius = (w * 0.22f) * sunPulse
+        val celestialCenter = Offset(w * 0.58f, h * 0.38f)
+        val celestialRadius = w * 0.22f
 
-        // Sun Glow Halo
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color(0xFFFFD54F).copy(alpha = 0.45f),
-                    Color(0xFFFFB300).copy(alpha = 0.2f),
-                    Color.Transparent
+        if (isDay) {
+            // ==========================================
+            // 1. DAYTIME: SUN WITH ETHEREAL CELESTIAL HALO
+            // ==========================================
+
+            // A. Outer Ethereal Golden Atmospheric Halo (Spreads softly into sky)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFFFD54F).copy(alpha = 0.40f * haloPulse),
+                        Color(0xFFFFB300).copy(alpha = 0.22f * haloPulse),
+                        Color(0xFFFFA000).copy(alpha = 0.08f),
+                        Color.Transparent
+                    ),
+                    center = celestialCenter,
+                    radius = celestialRadius * 2.4f
                 ),
-                center = sunCenter,
-                radius = sunRadius * 1.8f
-            ),
-            radius = sunRadius * 1.8f,
-            center = sunCenter
-        )
+                radius = celestialRadius * 2.4f,
+                center = celestialCenter
+            )
 
-        // Radiating Sunbeam Spikes (12 rays)
-        val rayCount = 12
-        for (i in 0 until rayCount) {
-            val angleDeg = (i * 360f / rayCount)
-            val rad = Math.toRadians(angleDeg.toDouble())
-            val rayStartDist = sunRadius * 1.18f
-            val rayEndDist = sunRadius * 1.55f
+            // B. Intermediate Luminous Golden Aura
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFFFF9C4).copy(alpha = 0.65f),
+                        Color(0xFFFFE082).copy(alpha = 0.35f),
+                        Color.Transparent
+                    ),
+                    center = celestialCenter,
+                    radius = celestialRadius * 1.55f
+                ),
+                radius = celestialRadius * 1.55f,
+                center = celestialCenter
+            )
 
-            val startX = sunCenter.x + (rayStartDist * cos(rad)).toFloat()
-            val startY = sunCenter.y + (rayStartDist * sin(rad)).toFloat()
-            val endX = sunCenter.x + (rayEndDist * cos(rad)).toFloat()
-            val endY = sunCenter.y + (rayEndDist * sin(rad)).toFloat()
+            // C. 12 Radiating Tapered Sunbeams
+            val rayCount = 12
+            for (i in 0 until rayCount) {
+                val angleDeg = (i * 360f / rayCount)
+                val rad = Math.toRadians(angleDeg.toDouble())
+                val startDist = celestialRadius * 1.14f
+                val endDist = celestialRadius * 1.58f
 
-            drawLine(
-                color = Color(0xFFFFCA28),
-                start = Offset(startX, startY),
-                end = Offset(endX, endY),
-                strokeWidth = w * 0.032f,
-                cap = StrokeCap.Round
+                val startX = celestialCenter.x + (startDist * cos(rad)).toFloat()
+                val startY = celestialCenter.y + (startDist * sin(rad)).toFloat()
+                val endX = celestialCenter.x + (endDist * cos(rad)).toFloat()
+                val endY = celestialCenter.y + (endDist * sin(rad)).toFloat()
+
+                drawLine(
+                    color = Color(0xFFFFD54F),
+                    start = Offset(startX, startY),
+                    end = Offset(endX, endY),
+                    strokeWidth = w * 0.030f,
+                    cap = StrokeCap.Round
+                )
+            }
+
+            // D. 3D Spherical Sun Body (Offset Highlight toward top-left)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFFFFDE7), // Specular highlight
+                        Color(0xFFFFEE58), // Bright gold
+                        Color(0xFFFFB300), // Rich amber
+                        Color(0xFFE65100)  // Deep shadow rim
+                    ),
+                    center = Offset(celestialCenter.x - celestialRadius * 0.25f, celestialCenter.y - celestialRadius * 0.25f),
+                    radius = celestialRadius * 1.15f
+                ),
+                radius = celestialRadius,
+                center = celestialCenter
+            )
+        } else {
+            // ==========================================
+            // 2. NIGHTTIME: MOON WITH SILVER LUNAR HALO
+            // ==========================================
+
+            // A. Outer Ethereal Silver Lunar Halo
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFE2E8F0).copy(alpha = 0.38f * haloPulse),
+                        Color(0xFFCBD5E1).copy(alpha = 0.20f * haloPulse),
+                        Color(0xFF94A3B8).copy(alpha = 0.06f),
+                        Color.Transparent
+                    ),
+                    center = celestialCenter,
+                    radius = celestialRadius * 2.3f
+                ),
+                radius = celestialRadius * 2.3f,
+                center = celestialCenter
+            )
+
+            // B. Intermediate Silver Moon Glow
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFFFFFFF).copy(alpha = 0.60f),
+                        Color(0xFFF1F5F9).copy(alpha = 0.30f),
+                        Color.Transparent
+                    ),
+                    center = celestialCenter,
+                    radius = celestialRadius * 1.45f
+                ),
+                radius = celestialRadius * 1.45f,
+                center = celestialCenter
+            )
+
+            // C. Twinkling Night Stars in Sky
+            val starOffsets = listOf(
+                Offset(w * 0.15f, h * 0.22f),
+                Offset(w * 0.32f, h * 0.15f),
+                Offset(w * 0.78f, h * 0.18f),
+                Offset(w * 0.88f, h * 0.34f)
+            )
+            starOffsets.forEachIndexed { sIdx, sPt ->
+                val sAlpha = (shimmerAlpha + sIdx * 0.15f) % 1f
+                drawCircle(
+                    color = Color.White.copy(alpha = sAlpha),
+                    radius = 1.8f,
+                    center = sPt
+                )
+            }
+
+            // D. 3D Spherical Moon Body with Pearlescent Gradient
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFFFFFFF), // Moon specular highlight
+                        Color(0xFFF1F5F9), // Pearl white
+                        Color(0xFFCBD5E1), // Lunar grey
+                        Color(0xFF64748B)  // Shadow rim
+                    ),
+                    center = Offset(celestialCenter.x - celestialRadius * 0.22f, celestialCenter.y - celestialRadius * 0.22f),
+                    radius = celestialRadius * 1.1f
+                ),
+                radius = celestialRadius,
+                center = celestialCenter
+            )
+
+            // Subtle Lunar Crater details
+            drawCircle(
+                color = Color(0xFF94A3B8).copy(alpha = 0.25f),
+                radius = celestialRadius * 0.22f,
+                center = Offset(celestialCenter.x + celestialRadius * 0.25f, celestialCenter.y - celestialRadius * 0.15f)
+            )
+            drawCircle(
+                color = Color(0xFF94A3B8).copy(alpha = 0.20f),
+                radius = celestialRadius * 0.16f,
+                center = Offset(celestialCenter.x - celestialRadius * 0.15f, celestialCenter.y + celestialRadius * 0.30f)
             )
         }
 
-        // Sun Core Disc (Golden Gradient)
-        drawCircle(
-            brush = Brush.linearGradient(
-                colors = listOf(Color(0xFFFFF176), Color(0xFFFFB300), Color(0xFFF57C00)),
-                start = Offset(sunCenter.x - sunRadius, sunCenter.y - sunRadius),
-                end = Offset(sunCenter.x + sunRadius, sunCenter.y + sunRadius)
-            ),
-            radius = sunRadius,
-            center = sunCenter
-        )
+        // ==========================================
+        // 3. THUNDERSTORM / RAIN ATMOSPHERIC AURA
+        // ==========================================
+        if (isThunderstorm) {
+            // Electric Violet Storm Pulse Aura
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFB388FF).copy(alpha = 0.28f * shimmerAlpha),
+                        Color(0xFF7C4DFF).copy(alpha = 0.12f * shimmerAlpha),
+                        Color.Transparent
+                    ),
+                    center = Offset(w * 0.52f, h * 0.64f),
+                    radius = w * 0.45f
+                ),
+                radius = w * 0.45f,
+                center = Offset(w * 0.52f, h * 0.64f)
+            )
+        }
 
-        // 2. Draw Soft Fluffy Cloud (Overlapping lower right quadrant)
+        // ==========================================
+        // 4. SOFT FLUFFY 3D CLOUD (Overlapping lower right)
+        // ==========================================
         val cloudBaseY = h * 0.64f
         val cloudBaseX = w * 0.52f
         val cloudWidth = w * 0.44f
@@ -134,8 +284,9 @@ fun WeatherHeroArt(
             )
         )
 
-        // 3. Precipitation Drops (3 Columns below cloud)
-        val isRainy = weatherCode in listOf(51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99) || weatherCode == 1 || weatherCode == 2 || weatherCode == 3
+        // ==========================================
+        // 5. ANIMATED PRECIPITATION RAINDROPS
+        // ==========================================
         if (isRainy) {
             val dropCols = listOf(
                 Offset(cloudBaseX - cloudWidth * 0.3f, cloudBaseY + cloudHeight * 0.55f),

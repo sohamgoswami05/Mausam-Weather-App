@@ -43,6 +43,11 @@ fun CriticalAlertsTicker(
     isHindi: Boolean,
     onAlertClick: () -> Unit
 ) {
+    // Only display top ticker during actual IMD warnings or severe hazard
+    if (data.imdAlert.level == IMDWarningLevel.GREEN && data.aqi <= 200 && data.lightningProximityKm == null) {
+        return
+    }
+
     val alertList = remember(data) {
         listOf(
             TickerAlert(
