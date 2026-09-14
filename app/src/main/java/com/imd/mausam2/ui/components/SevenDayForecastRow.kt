@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.imd.mausam2.domain.WeatherUnitHelper
 import com.imd.mausam2.data.model.DayForecast
 import com.imd.mausam2.ui.theme.*
 
@@ -25,7 +26,8 @@ import com.imd.mausam2.ui.theme.*
 @Composable
 fun SevenDayForecastRow(
     days: List<DayForecast>,
-    isHindi: Boolean
+    isHindi: Boolean,
+    isFahrenheit: Boolean = false
 ) {
     var selectedDay by remember { mutableStateOf<DayForecast?>(null) }
 
@@ -120,13 +122,13 @@ fun SevenDayForecastRow(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "${day.maxTemp.toInt()}°",
+                            text = WeatherUnitHelper.formatTemp(day.maxTemp, isFahrenheit),
                             color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "${day.minTemp.toInt()}°",
+                            text = WeatherUnitHelper.formatTemp(day.minTemp, isFahrenheit),
                             color = TextMuted,
                             fontSize = 12.sp
                         )
@@ -189,7 +191,7 @@ fun SevenDayForecastRow(
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = "${hour.temp.toInt()}°C",
+                                    text = WeatherUnitHelper.formatTempWithUnit(hour.temp, isFahrenheit),
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp

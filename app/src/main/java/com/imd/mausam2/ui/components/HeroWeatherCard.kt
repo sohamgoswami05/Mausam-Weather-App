@@ -22,6 +22,7 @@ import com.imd.mausam2.data.model.CompleteWeatherData
 import com.imd.mausam2.ui.theme.NeonOrange
 import com.imd.mausam2.ui.theme.TextMuted
 import com.imd.mausam2.ui.theme.TextSecondary
+import com.imd.mausam2.domain.WeatherUnitHelper
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -36,6 +37,7 @@ import java.util.*
 fun HeroWeatherCard(
     data: CompleteWeatherData,
     isHindi: Boolean,
+    isFahrenheit: Boolean = false,
     smartGlanceText: String,
     isPlayingAudio: Boolean,
     onAudioToggle: () -> Unit,
@@ -43,8 +45,12 @@ fun HeroWeatherCard(
     onCustomizeClick: () -> Unit,
     onLanguageToggle: () -> Unit
 ) {
-    val maxTemp = data.sevenDayForecast.firstOrNull()?.maxTemp?.toInt() ?: (data.currentTemp + 2).toInt()
-    val minTemp = data.sevenDayForecast.firstOrNull()?.minTemp?.toInt() ?: (data.currentTemp - 4).toInt()
+    val maxTemp = data.sevenDayForecast.firstOrNull()?.maxTemp ?: (data.currentTemp + 2.0)
+    val minTemp = data.sevenDayForecast.firstOrNull()?.minTemp ?: (data.currentTemp - 4.0)
+    val currentTempStr = WeatherUnitHelper.formatTemp(data.currentTemp, isFahrenheit)
+    val rangeStr = WeatherUnitHelper.formatRange(minTemp, maxTemp, isFahrenheit)
+    val feelsStr = WeatherUnitHelper.formatTemp(data.feelsLike, isFahrenheit)
+    val windStr = WeatherUnitHelper.formatSpeed(data.windSpeed, isFahrenheit)
     val condition = if (isHindi) data.conditionTextHi else data.conditionText
 
     val currentTime = remember {
@@ -123,7 +129,7 @@ fun HeroWeatherCard(
             // Left Column: Temperature, Condition, High/Low
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${data.currentTemp.toInt()}°",
+                    text = currentTempStr,
                     fontSize = 76.sp,
                     fontWeight = FontWeight.Light,
                     color = Color.White,
@@ -133,7 +139,7 @@ fun HeroWeatherCard(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = "$condition • H $maxTemp° L $minTemp°",
+                    text = "$condition • $rangeStr",
                     color = Color.White.copy(alpha = 0.92f),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
@@ -186,7 +192,7 @@ fun HeroWeatherCard(
                 color = Color.White.copy(alpha = 0.12f)
             ) {
                 Text(
-                    text = if (isHindi) "महसूस ${data.feelsLike.toInt()}°" else "Feels ${data.feelsLike.toInt()}°",
+                    text = if (isHindi) "महसूस $feelsStr" else "Feels $feelsStr",
                     color = Color.White.copy(alpha = 0.92f),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
@@ -200,7 +206,7 @@ fun HeroWeatherCard(
                 color = Color.White.copy(alpha = 0.12f)
             ) {
                 Text(
-                    text = if (isHindi) "हवा ${data.windSpeed.toInt()} km/h" else "Wind ${data.windSpeed.toInt()} km/h",
+                    text = if (isHindi) "हवा $windStr" else "Wind $windStr",
                     color = Color.White.copy(alpha = 0.92f),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,

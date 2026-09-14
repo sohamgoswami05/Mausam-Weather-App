@@ -37,6 +37,21 @@ class MausamViewModel(application: Application) : AndroidViewModel(application) 
     private val _isHindi = MutableStateFlow(prefs.getBoolean("pref_is_hindi", false))
     val isHindi: StateFlow<Boolean> = _isHindi.asStateFlow()
 
+    private val _isFahrenheit = MutableStateFlow(prefs.getBoolean("pref_is_fahrenheit", false))
+    val isFahrenheit: StateFlow<Boolean> = _isFahrenheit.asStateFlow()
+
+    private val _wallpaperTheme = MutableStateFlow(com.imd.mausam2.domain.WallpaperTheme.fromId(prefs.getString("pref_wallpaper_theme", "slate")))
+    val wallpaperTheme: StateFlow<com.imd.mausam2.domain.WallpaperTheme> = _wallpaperTheme.asStateFlow()
+
+    private val _weatherEffectsEnabled = MutableStateFlow(prefs.getBoolean("pref_weather_effects", true))
+    val weatherEffectsEnabled: StateFlow<Boolean> = _weatherEffectsEnabled.asStateFlow()
+
+    private val _largeTextEnabled = MutableStateFlow(prefs.getBoolean("pref_large_text", false))
+    val largeTextEnabled: StateFlow<Boolean> = _largeTextEnabled.asStateFlow()
+
+    private val _audioLanguageHindi = MutableStateFlow(prefs.getBoolean("pref_audio_is_hindi", prefs.getBoolean("pref_is_hindi", false)))
+    val audioLanguageHindi: StateFlow<Boolean> = _audioLanguageHindi.asStateFlow()
+
     private val _smartGlanceText = MutableStateFlow("")
     val smartGlanceText: StateFlow<String> = _smartGlanceText.asStateFlow()
 
@@ -87,11 +102,55 @@ class MausamViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun toggleLanguage() {
-        val newLang = !_isHindi.value
-        _isHindi.value = newLang
-        prefs.edit().putBoolean("pref_is_hindi", newLang).apply()
-        voiceEngine.setLanguage(newLang)
+        setLanguage(!_isHindi.value)
+    }
+
+    fun setLanguage(isHindi: Boolean) {
+        _isHindi.value = isHindi
+        prefs.edit().putBoolean("pref_is_hindi", isHindi).apply()
+        voiceEngine.setLanguage(isHindi)
         _weatherData.value?.let { updateSmartGlance(it) }
+    }
+
+    fun setUnit(isFahrenheit: Boolean) {
+        _isFahrenheit.value = isFahrenheit
+        prefs.edit().putBoolean("pref_is_fahrenheit", isFahrenheit).apply()
+    }
+
+    fun toggleUnit() {
+        setUnit(!_isFahrenheit.value)
+    }
+
+    fun setWallpaperTheme(theme: com.imd.mausam2.domain.WallpaperTheme) {
+        _wallpaperTheme.value = theme
+        prefs.edit().putString("pref_wallpaper_theme", theme.id).apply()
+    }
+
+    fun toggleWeatherEffects() {
+        val newVal = !_weatherEffectsEnabled.value
+        _weatherEffectsEnabled.value = newVal
+        prefs.edit().putBoolean("pref_weather_effects", newVal).apply()
+    }
+
+    fun toggleLargeText() {
+        val newVal = !_largeTextEnabled.value
+        _largeTextEnabled.value = newVal
+        prefs.edit().putBoolean("pref_large_text", newVal).apply()
+    }
+
+    fun setAudioLanguage(isHindi: Boolean) {
+        _audioLanguageHindi.value = isHindi
+        prefs.edit().putBoolean("pref_audio_is_hindi", isHindi).apply()
+    }
+
+    fun toggleActivePersona(persona: PersonaType) {
+        val current = _activePersonas.value.toMutableSet()
+        if (current.contains(persona)) {
+            if (current.size > 1) current.remove(persona) // keep at least 1 active
+        } else {
+            current.add(persona)
+        }
+        updateActivePersonas(current)
     }
 
     fun updateActivePersonas(newSet: Set<PersonaType>) {
@@ -105,14 +164,27 @@ class MausamViewModel(application: Application) : AndroidViewModel(application) 
         _selectedFilter.value = persona
     }
 
+    fun playBriefing(isHindi: Boolean) {
+        if (voiceEngine.isPlaying.value) {
+            voiceEngine.stop()
+        }
+        val data = _weatherData.value ?: return
+        val speechText = if (isHindi) {
+            SmartGlanceAI.generateInsightHi(data, _activePersonas.value)
+        } else {
+            SmartGlanceAI.generateInsightEn(data, _activePersonas.value)
+        }
+        if (speechText.isNotBlank()) {
+            voiceEngine.speak(speechText, isHindi)
+        }
+    }
+
     fun toggleAudio() {
         if (voiceEngine.isPlaying.value) {
             voiceEngine.stop()
         } else {
-            val text = _smartGlanceText.value
-            if (text.isNotBlank()) {
-                voiceEngine.speak(text, _isHindi.value)
-            }
+            // Play in preferred audio language (or app language)
+            playBriefing(_audioLanguageHindi.value)
         }
     }
 

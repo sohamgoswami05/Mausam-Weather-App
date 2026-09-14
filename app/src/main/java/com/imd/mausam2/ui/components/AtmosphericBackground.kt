@@ -27,6 +27,8 @@ import java.util.Calendar
 @Composable
 fun AtmosphericBackground(
     weatherCode: Int,
+    wallpaperTheme: com.imd.mausam2.domain.WallpaperTheme = com.imd.mausam2.domain.WallpaperTheme.SLATE,
+    weatherEffectsEnabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val currentHour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
@@ -59,6 +61,9 @@ fun AtmosphericBackground(
     )
 
     val gradientColors = when {
+        wallpaperTheme != com.imd.mausam2.domain.WallpaperTheme.SLATE -> {
+            if (isDay) wallpaperTheme.dayColors else wallpaperTheme.nightColors
+        }
         isThunderstorm -> listOf(
             Color(0xFF1E172F),
             Color(0xFF261D3B),
@@ -102,28 +107,30 @@ fun AtmosphericBackground(
             .fillMaxSize()
             .background(Brush.verticalGradient(gradientColors))
     ) {
-        // Atmospheric Sky Wisps, Celestial Glow, and Landmark Silhouette Canvas
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val w = size.width
-            val h = size.height
+        if (weatherEffectsEnabled) {
+            // Atmospheric Sky Wisps, Celestial Glow, and Landmark Silhouette Canvas
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
 
-            // 1. Celestial Ambient Atmospheric Glow (Sun, Moon, Rain Clouds, Thunderstorm)
-            drawCelestialAtmosphericGlow(
-                scope = this,
-                w = w,
-                h = h,
-                isDay = isDay,
-                isRainy = isRainy,
-                isThunderstorm = isThunderstorm,
-                glowPulse = glowPulse,
-                lightningFlash = lightningFlash
-            )
+                // 1. Celestial Ambient Atmospheric Glow (Sun, Moon, Rain Clouds, Thunderstorm)
+                drawCelestialAtmosphericGlow(
+                    scope = this,
+                    w = w,
+                    h = h,
+                    isDay = isDay,
+                    isRainy = isRainy,
+                    isThunderstorm = isThunderstorm,
+                    glowPulse = glowPulse,
+                    lightningFlash = lightningFlash
+                )
 
-            // 2. Soft Drifting Atmospheric Clouds in Upper-Left Sky
-            drawAtmosphericCloudWisps(this, w, h)
+                // 2. Soft Drifting Atmospheric Clouds in Upper-Left Sky
+                drawAtmosphericCloudWisps(this, w, h)
 
-            // 3. Horizon Landmark Skyline Silhouette (Victoria Memorial / Heritage Domes)
-            drawHorizonLandmarkSilhouette(this, w, h)
+                // 3. Horizon Landmark Skyline Silhouette (Victoria Memorial / Heritage Domes)
+                drawHorizonLandmarkSilhouette(this, w, h)
+            }
         }
 
         content()

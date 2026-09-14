@@ -37,6 +37,9 @@ fun MausamDashboard(
     val activePersonas by viewModel.activePersonas.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val isHindi by viewModel.isHindi.collectAsState()
+    val isFahrenheit by viewModel.isFahrenheit.collectAsState()
+    val wallpaperTheme by viewModel.wallpaperTheme.collectAsState()
+    val weatherEffectsEnabled by viewModel.weatherEffectsEnabled.collectAsState()
     val smartGlanceText by viewModel.smartGlanceText.collectAsState()
     val isPlayingAudio by viewModel.isPlayingAudio.collectAsState()
     val currentTab by viewModel.currentTab.collectAsState()
@@ -51,7 +54,11 @@ fun MausamDashboard(
         SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
     }
 
-    AtmosphericBackground(weatherCode = currentCode) {
+    AtmosphericBackground(
+        weatherCode = currentCode,
+        wallpaperTheme = wallpaperTheme,
+        weatherEffectsEnabled = weatherEffectsEnabled
+    ) {
         if (weatherData == null && isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -110,6 +117,7 @@ fun MausamDashboard(
                                         HeroWeatherCard(
                                             data = data,
                                             isHindi = isHindi,
+                                            isFahrenheit = isFahrenheit,
                                             smartGlanceText = smartGlanceText,
                                             isPlayingAudio = isPlayingAudio,
                                             onAudioToggle = { viewModel.toggleAudio() },
@@ -134,6 +142,7 @@ fun MausamDashboard(
                                             data.feelsLike >= 18 -> Pair(if (isHindi) "हल्का ठंडा" else "Mild", "• Good")
                                             else -> Pair(if (isHindi) "ठंडा" else "Cold", "• Chilly")
                                         }
+                                        val feelsStr = com.imd.mausam2.domain.WeatherUnitHelper.formatTemp(data.feelsLike, isFahrenheit)
 
                                         MausamInsightCard(
                                             categoryTitle = if (isHindi) "सुगमता सूचकांक" else "Comfort index",
@@ -141,7 +150,7 @@ fun MausamDashboard(
                                             statusBadgeText = comfortLevel.second,
                                             statusBadgeBg = Color(0xFF5A3C26),
                                             statusBadgeColor = Color(0xFFFFB74D),
-                                            subDetail = if (isHindi) "महसूस: ${data.feelsLike.toInt()}°C" else "Feels like ${data.feelsLike.toInt()}°",
+                                            subDetail = if (isHindi) "महसूस: $feelsStr" else "Feels like $feelsStr",
                                             footerAttribution = getObservatoryName(data.location.cityName),
                                             icon = Icons.Default.Eco,
                                             iconBgColor = Color(0xFF4A3425),
@@ -264,7 +273,8 @@ fun MausamDashboard(
                                         Spacer(modifier = Modifier.height(6.dp))
                                         SevenDayForecastRow(
                                             days = data.sevenDayForecast,
-                                            isHindi = isHindi
+                                            isHindi = isHindi,
+                                            isFahrenheit = isFahrenheit
                                         )
                                     }
 
@@ -385,16 +395,17 @@ fun MausamDashboard(
         )
     }
 
-    // 4. Settings & Quick Navigation Sheet
+    // 4. Settings Screen Full-Screen Dialog
     if (showSettingsSheet) {
-        MausamSettingsMenuSheet(
-            currentTab = currentTab,
-            isHindi = isHindi,
-            onDismiss = { showSettingsSheet = false },
-            onTabSelected = { tab -> viewModel.selectTab(tab) },
-            onLanguageToggle = { viewModel.toggleLanguage() },
-            onOpenOnboarding = { viewModel.triggerOnboarding() }
-        )
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { showSettingsSheet = false },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            com.imd.mausam2.ui.screens.MausamSettingsScreen(
+                viewModel = viewModel,
+                onBack = { showSettingsSheet = false }
+            )
+        }
     }
 }
 
